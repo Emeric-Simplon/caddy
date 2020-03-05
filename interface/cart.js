@@ -4,8 +4,13 @@ let httpGet = theUrl => {
   xmlHttp.send(null);
   return JSON.parse(xmlHttp.response);
 };
-let productList = httpGet("http://localhost:3000/api/v1/products");
-let prdList = [];
+let productList = httpGet("http://localhost:3000/products");
+
+let cart = [];
+let productArr = [];
+let cartElt = document.getElementById("cart");
+let totalElt = document.getElementById("total");
+let total = 0;
 
 let createProductList = jsonProductList => {
   const productListElt = document.getElementById("productList");
@@ -14,75 +19,91 @@ let createProductList = jsonProductList => {
     const newProduct = document.createElement("div");
     productListElt.appendChild(newProduct);
     newProduct.setAttribute("class", "product");
-    newProduct.setAttribute("id", item._id);
-    newProduct.innerHTML = `<img src=${item.imgUrl}></img>
-        <h2>${item.name}</h2>
-        <p>${item.description}</p>
-        <p>${item.price}</p>
+    newProduct.id = item.ID;
+    newProduct.innerHTML = `
+        <h2>${item.Name}</h2>
+        <p>${item.Brand}</p>
+        <p>${item.Price} €</p>
         <select selected=1>
-            <option value=1>1</option>
-            <option value=2>2</option>
-            <option value=3>3</option>
-            <option value=4>4</option>
-            <option value=5>5</option>
-            <option value=6>6</option>
-            <option value=7>7</option>
-            <option value=8>8</option>
-            <option value=9>9</option>
-            <option value=10>10</option>
-        </select>
-        <button onClick="addProductToCart(this.parentNode.id,parseInt(this.parentNode.childNodes[8].value))">Add</button>`;
+        <option value=1>1</option>
+        <option value=2>2</option>
+        <option value=3>3</option>
+        <option value=4>4</option>
+        <option value=5>5</option>
+        <option value=6>6</option>
+        <option value=7>7</option>
+        <option value=8>8</option>
+        <option value=9>9</option>
+        <option value=10>10</option>
+    </select>
+        <button onClick="addProductToCart(this.parentNode.id, parseInt(this.parentNode.childNodes[8].previousElementSibling.value))">Add</button>`;
   });
-  prdList = jsonProductList;
+  productArr.push(jsonProductList);
 };
 
-let cart = [];
+// Retourne le produit (objet) du tableau initial
+let getProduct = id => {
+  let product = productArr[0].find(item => item.ID == id);
+  return product;
+};
 
-let createCartProduct = (name, price, quantity) => {
-  const cartElt = document.getElementById("cart");
+// Retourne le produit (objet) du tableau panier
+let isInCart = id => {
+  let product = cart.find(item => item.ID == id);
+  return product;
+};
+
+// Parcours le tableau cart afin de créer le panier
+let createCart = arr => {
+  cartElt.innerHTML = "";
+  arr.forEach(p => {
     const cartProduct = document.createElement("div");
     cartElt.appendChild(cartProduct);
-    cartProduct.innerHTML = `<p>${name}</p>
-        <p>${price}</p>
+    cartProduct.innerHTML = `<p>${p.Name}</p>
+        <p >${p.Price}</p>
         <button onClick="incrementQuantity(this.nextSibling)">+</button>
-        <p>${quantity}</p>
+        <p productId=${p.ID}>${p.Quantity}</p>
         <button onClick="decrementQuantity(this.previousSibling)">-</button>
         `;
+  });
 };
 
-let incrementQuantity = (node) => {
-  
-    let quantity = parseInt(node.nextSibling.textContent);
-    quantity++
-    node.nextSibling.innerHTML = quantity
+let totalPrice = arr => {
+  total = 0;
+  for (i = 0; i < arr.length; i++) {
+    total += arr[i].Quantity * arr[i].Price;
+  }
+  return total;
+};
+let incrementQuantity = node => {
+  let productId = node.nextSibling.getAttribute("productId");
 
-}
+  isInCart(productId).Quantity += 1;
+  node.nextSibling.innerHTML = isInCart(productId).Quantity;
+  createCart(cart);
+  totalElt.innerHTML = totalPrice(cart);
+};
 
-let decrementQuantity = (node) => {
-     
-    let quantity = parseInt(node.previousSibling.textContent);
-    quantity--
-    node.previousSibling.innerHTML = quantity
-    if(quantity == 0) {
-        const productElt = node.parentNode;
+let decrementQuantity = node => {
+  let productId = node.previousSibling.getAttribute("productId");
 
-    }
-}
-
+  isInCart(productId).Quantity -= 1;
+  node.nextSibling.innerHTML = isInCart(productId).Quantity;
+  createCart(cart);
+  totalElt.innerHTML = totalPrice(cart);
+};
 
 let addProductToCart = (id, quantity) => {
-
-    let getProduct = prdList.find(item => item._id == id);
-    let isInCart = cart.find(item => item._id == id);
-    if(!isInCart){
-        getProduct.quantity = quantity;
-        cart.push(getProduct);
-        createCartProduct(getProduct.name, getProduct.price, quantity);
-    }else{
-        isInCart.quantity = isInCart.quantity + quantity;
-
-    }
-
+  if (isInCart(id) != getProduct(id)) {
+    cart.push(getProduct(id));
+    isInCart(id).Quantity = quantity;
+    createCart(cart);
+    totalElt.innerHTML = totalPrice(cart);
+  }else{
+    isInCart(id).Quantity += quantity;
+    createCart(cart);
+    totalElt.innerHTML = totalPrice(cart);
+  }
 };
 
 setTimeout(createProductList(productList), 700);

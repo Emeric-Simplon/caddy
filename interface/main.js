@@ -108,3 +108,50 @@ let productBuilder = products => {
 };
 
 window.onload = setTimeout(startApp, 500);
+
+
+
+
+//--------//
+let createCartProduct = (name, price, quantity) => {
+  const cartElt = document.getElementById("cart");
+  cartElt.innerHTML = "";
+  cart.forEach(p => {
+    const cartProduct = document.createElement("div");
+    cartElt.appendChild(cartProduct);
+    cartProduct.innerHTML = `<p>${name}</p>
+        <p>${price}</p>
+        <button onClick="incrementQuantity(this.nextSibling)">+</button>
+        <p>${quantity}</p>
+        <button onClick="decrementQuantity(this.previousSibling)">-</button>
+        `;
+  });
+};
+
+let incrementQuantity = node => {
+  let quantity = parseInt(node.nextSibling.textContent);
+  quantity++;
+  node.nextSibling.innerHTML = quantity;
+};
+
+let decrementQuantity = node => {
+  let quantity = parseInt(node.previousSibling.textContent);
+  quantity--;
+  node.previousSibling.innerHTML = quantity;
+  if (quantity <= 0) {
+    node.parentNode.innerHTML = "";
+  }
+};
+
+let addProductToCart = (id, quantity) => {
+  let getProduct = prdList.find(item => item._id == id);
+  let isInCart = cart.find(item => item._id == id);
+  if (!isInCart) {
+    getProduct.quantity = quantity;
+    cart.push(getProduct);
+    createCartProduct(getProduct.name, getProduct.price, quantity);
+  } else {
+    isInCart.quantity = isInCart.quantity + quantity;
+    createCartProduct(getProduct.name, getProduct.price, isInCart.quantity);
+  }
+};
